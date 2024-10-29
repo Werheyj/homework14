@@ -4,7 +4,7 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 import asyncio
-
+from crud_functions import *
 
 api = ''
 bot = Bot(token=api)
@@ -52,22 +52,19 @@ async def main_menu(message):
                          reply_markup=kbI)
 
 
+products = get_all_products()
+
+
 @dp.message_handler(text='Купить')
 async def get_buying_list(message):
-    await message.answer(f'Название: Product{1} | Описание: описание {1} | Цена: {1 * 100}')
-    with open('files/1.jpg', 'rb') as img:
-        await message.answer_photo(img)
-    await message.answer(f'Название: Product{2} | Описание: описание {2} | Цена: {2 * 100}')
-    with open('files/2.png', 'rb') as img:
-        await message.answer_photo(img)
-    await message.answer(f'Название: Product{3} | Описание: описание {3} | Цена: {3 * 100}')
-    with open('files/3.jpg', 'rb') as img:
-        await message.answer_photo(img)
-    await message.answer(f'Название: Product{4} | Описание: описание {4} | Цена: {4 * 100}')
-    with open('files/4.jpg', 'rb') as img:
-        await message.answer_photo(img)
-    await message.answer('Выберите продукт для покупки:',
-                         reply_markup=kbI)
+    images = ['files/1.jpg', 'files/2.png', 'files/3.jpg', 'files/4.jpg']
+    for product in products:
+        title, description, price = product
+        product_message = f'Название: Product{title} | Описание: описание {description} | Цена: {price}'
+        for img_path in images:
+            with open(img_path, 'rb') as img:
+                await message.answer_photo(img, caption=product_message)
+    await message.answer('Выберите продукт для покупки:', reply_markup=kbI)
 
 
 @dp.callback_query_handler(text='product_buying')
@@ -79,7 +76,7 @@ async def send_confirm_message(call):
 @dp.callback_query_handler(text='formulas')
 async def get_formulas(call):
     await call.message.answer('Формула Миффлина-Сан Жеора: '
-                      '10 x вес (кг) + 6,25 x рост (см) – 5 x возраст (г) – 161')
+                            '10 x вес (кг) + 6,25 x рост (см) – 5 x возраст (г) – 161')
     await call.answer()
 
 
