@@ -6,24 +6,20 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 import asyncio
 from crud_functions import *
 
-api = ''
+api = '7640886664:AAEt_t4ayyj1-eb8PRcRz3ZB8Y_MyYlNxGQ'
 bot = Bot(token=api)
 dp = Dispatcher(bot, storage=MemoryStorage())
-
-
-class UserState(StatesGroup):
-    age = State()
-    growth = State()
-    weight = State()
 
 
 kb = ReplyKeyboardMarkup(resize_keyboard=True)
 button1 = KeyboardButton(text='Рассчитать')
 button2 = KeyboardButton(text='Информация')
 button3 = KeyboardButton(text='Купить')
+button4 = KeyboardButton(text='Регистрация')
 kb.add(button1)
 kb.add(button2)
 kb.add(button3)
+kb.add(button4)
 
 kbI = InlineKeyboardMarkup()
 buttonInline1 = InlineKeyboardButton(text='Product1',
@@ -38,6 +34,65 @@ kbI.add(buttonInline1)
 kbI.add(buttonInline2)
 kbI.add(buttonInline3)
 kbI.add(buttonInline4)
+
+
+class UserState(StatesGroup):
+    age = State()
+    growth = State()
+    weight = State()
+
+
+class RegistrationState(StatesGroup):
+    username = State
+    email = State
+    age = State
+    balance = 1000
+
+
+connection = sqlite3.connect('Users.db')
+cursor = connection.cursor()
+
+check_user = cursor.execute('SELECT username FROM Users')
+all_users = cursor.fetchall()
+
+
+@dp.message_handler(text='Регистрация')
+async def sing_up(message):
+    await message.answer('ведите имя пользователя (только латинский алфавит):')
+    await RegistrationState.username.set()
+
+
+@dp.message_handler(state=RegistrationState.username)
+async def set_username(message, state):
+    username = message.text
+    if username in all_users:
+        await message.answer('Пользователь существует, введите другое имя')
+        return
+    else:
+        await state.update_data(username=username)
+        await message.answer('Введите свой email:')
+        await RegistrationState.email.set()
+
+
+@dp.message_handler(state=RegistrationState.email)
+async def set_email(message, state):
+    email = message.text
+    user_data = await state.get_data()
+    await state.update_data(email=email)
+    await message.answer('Введите свой возраст:')
+    await RegistrationState.age.set()
+
+
+@dp.message_handler(state=RegistrationState.age)
+async def set_age(message, state):
+    age = message.text
+    user_data = await state.get_data()
+    age = await state.update_data(age=age)
+    username = user_data.get('username')
+    email = user_data.get('email')
+    add_user(username, email, age)
+
+    await state.finish()
 
 
 @dp.message_handler(commands=['start'])
